@@ -27,3 +27,6 @@ export const getReport = (token, eventId) =>
 
 export const issueComplimentary = (token, data) =>
   axios.post(`${BASE}/api/admin/tickets/complimentary`, data, auth(token))
+
+export const validateTicket = (token, data) =>
+  axios.post(`${BASE}/api/tickets/validate`, data, auth(token))

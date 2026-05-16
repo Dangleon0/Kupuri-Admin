@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage'
 import EventsPage from './pages/EventsPage'
 import EventDetailPage from './pages/EventDetailPage'
 import ComplimentaryPage from './pages/ComplimentaryPage'
+import ScannerPage from './pages/ScannerPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import './index.css'
 
@@ -22,6 +23,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
           <Route path="/events/:id" element={<ProtectedRoute><EventDetailPage /></ProtectedRoute>} />
           <Route path="/complimentary" element={<ProtectedRoute><ComplimentaryPage /></ProtectedRoute>} />
+          <Route path="/scan" element={<ProtectedRoute><ScannerPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

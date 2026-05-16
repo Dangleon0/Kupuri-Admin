@@ -14,6 +14,7 @@ export default function Layout({ children, title }) {
         <nav className="sidebar-nav">
           <Link className="nav-item" to="/">Eventos</Link>
           <Link className="nav-item" to="/complimentary">Cortesías</Link>
+          <Link className="nav-item" to="/scan">Escáner</Link>
         </nav>
         <div className="sidebar-footer">
           <span className="sidebar-user">{user?.email}</span>
