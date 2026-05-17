@@ -8,7 +8,7 @@ export default function EventsPage() {
   const { token } = useAuth()
   const [events, setEvents] = useState([])
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: '', description: '', venue: '', eventDate: '', coverUrl: '' })
+  const [form, setForm] = useState({ name: '', description: '', venueName: '', startsAt: '', coverUrl: '' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -24,9 +24,16 @@ export default function EventsPage() {
     setSaving(true)
     setError('')
     try {
-      await createEvent(token, { ...form, eventDate: new Date(form.eventDate).toISOString() })
+      await createEvent(token, {
+        slug: slugify(form.name),
+        name: form.name,
+        description: form.description,
+        venueName: form.venueName,
+        startsAt: new Date(form.startsAt).toISOString(),
+        coverUrl: form.coverUrl,
+      })
       setShowForm(false)
-      setForm({ name: '', description: '', venue: '', eventDate: '', coverUrl: '' })
+      setForm({ name: '', description: '', venueName: '', startsAt: '', coverUrl: '' })
       load()
     } catch (err) {
       setError(err.response?.data?.error || 'Error al crear evento')
@@ -58,8 +65,8 @@ export default function EventsPage() {
           {events.map(ev => (
             <tr key={ev.id}>
               <td><strong>{ev.name}</strong></td>
-              <td>{ev.venue || '—'}</td>
-              <td>{new Date(ev.eventDate).toLocaleDateString('es-MX')}</td>
+              <td>{ev.venueName || '—'}</td>
+              <td>{formatDate(ev.startsAt)}</td>
               <td><span className={`badge badge-${ev.status.toLowerCase()}`}>{ev.status}</span></td>
               <td><Link className="link" to={`/events/${ev.id}`}>Ver →</Link></td>
             </tr>
@@ -84,13 +91,13 @@ export default function EventsPage() {
               </div>
               <div className="field">
                 <label>Lugar</label>
-                <input value={form.venue}
-                       onChange={e => setForm(f => ({ ...f, venue: e.target.value }))}/>
+                <input value={form.venueName}
+                       onChange={e => setForm(f => ({ ...f, venueName: e.target.value }))}/>
               </div>
               <div className="field">
                 <label>Fecha y hora *</label>
-                <input type="datetime-local" required value={form.eventDate}
-                       onChange={e => setForm(f => ({ ...f, eventDate: e.target.value }))}/>
+                <input type="datetime-local" required value={form.startsAt}
+                       onChange={e => setForm(f => ({ ...f, startsAt: e.target.value }))}/>
               </div>
               <div className="field">
                 <label>URL imagen de portada</label>
@@ -111,4 +118,21 @@ export default function EventsPage() {
       )}
     </Layout>
   )
+}
+
+function formatDate(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('es-MX', {
+    day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
+}
+
+function slugify(value) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }

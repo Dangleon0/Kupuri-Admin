@@ -13,6 +13,7 @@ export default function Layout({ children, title }) {
         <div className="sidebar-brand">Kupuri Admin</div>
         <nav className="sidebar-nav">
           <Link className="nav-item" to="/">Eventos</Link>
+          <Link className="nav-item" to="/orders">Órdenes</Link>
           <Link className="nav-item" to="/complimentary">Cortesías</Link>
           <Link className="nav-item" to="/scan">Escáner</Link>
         </nav>

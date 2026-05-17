@@ -16,14 +16,29 @@ export default function ComplimentaryPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    getEvents(token).then(r => setEvents(r.data.filter(e => e.status === 'PUBLISHED')))
+    getEvents(token).then(async r => {
+      const published = r.data.filter(e => e.status === 'PUBLISHED')
+      setEvents(published)
+
+      for (const event of published) {
+        const types = await getTicketTypes(event.id)
+        if (types.data.length > 0) {
+          setForm(f => ({ ...f, eventId: event.id, ticketTypeId: types.data[0].id }))
+          setTicketTypes(types.data)
+          break
+        }
+      }
+    })
   }, [])
 
   useEffect(() => {
-    if (!form.eventId) return
+    if (!form.eventId) {
+      setTicketTypes([])
+      return
+    }
     getTicketTypes(form.eventId).then(r => {
       setTicketTypes(r.data)
-      if (r.data.length > 0) setForm(f => ({ ...f, ticketTypeId: r.data[0].id }))
+      setForm(f => ({ ...f, ticketTypeId: r.data.length > 0 ? r.data[0].id : '' }))
     })
   }, [form.eventId])
 
@@ -34,11 +49,10 @@ export default function ComplimentaryPage() {
     setSuccess('')
     try {
       const issued = await issueComplimentary(token, {
-        ticketTypeId: form.ticketTypeId,
-        quantity: Number(form.quantity),
-        holderName: form.holderName,
-        holderEmail: form.holderEmail,
-        reason: form.reason,
+        buyerName: form.holderName,
+        buyerEmail: form.holderEmail,
+        note: form.reason,
+        items: [{ ticketTypeId: form.ticketTypeId, quantity: Number(form.quantity) }],
       })
       setSuccess(`${issued.data.length} cortesía(s) emitida(s) y enviada(s) por email`)
       setForm(f => ({ ...f, holderName: '', holderEmail: '', reason: '', quantity: 1 }))
@@ -63,12 +77,17 @@ export default function ComplimentaryPage() {
           <div className="field">
             <label>Tipo de boleto *</label>
             <select required value={form.ticketTypeId}
+                    disabled={ticketTypes.length === 0}
                     onChange={e => setForm(f => ({ ...f, ticketTypeId: e.target.value }))}>
+              {ticketTypes.length === 0 && <option value="">Este evento no tiene tipos de boleto</option>}
               {ticketTypes.map(t => (
-                <option key={t.id} value={t.id}>{t.name} ({t.available} disponibles)</option>
+                <option key={t.id} value={t.id}>{t.displayName} ({t.available} disponibles)</option>
               ))}
             </select>
           </div>
+          {form.eventId && ticketTypes.length === 0 && (
+            <p className="error">Este evento no tiene tipos de boleto. Agrega uno en Eventos antes de emitir cortesías.</p>
+          )}
           <div className="field">
             <label>Cantidad</label>
             <input type="number" min="1" max="20" value={form.quantity}
@@ -91,7 +110,7 @@ export default function ComplimentaryPage() {
           </div>
           {error && <p className="error">{error}</p>}
           {success && <p className="success">{success}</p>}
-          <button type="submit" className="btn" disabled={saving}>
+          <button type="submit" className="btn" disabled={saving || !form.ticketTypeId}>
             {saving ? 'Emitiendo…' : 'Emitir cortesía'}
           </button>
         </form>

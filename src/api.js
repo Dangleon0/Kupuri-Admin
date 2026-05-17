@@ -30,3 +30,8 @@ export const issueComplimentary = (token, data) =>
 
 export const validateTicket = (token, data) =>
   axios.post(`${BASE}/api/tickets/validate`, data, auth(token))
+
+export const getOrders = (token, status) => {
+  const params = status ? `?status=${status}` : ''
+  return axios.get(`${BASE}/api/admin/orders${params}`, auth(token))
+}

@@ -11,7 +11,7 @@ export default function EventDetailPage() {
   const [ticketTypes, setTicketTypes] = useState([])
   const [report, setReport] = useState(null)
   const [showTypeForm, setShowTypeForm] = useState(false)
-  const [form, setForm] = useState({ name: '', description: '', price: '', quota: '' })
+  const [form, setForm] = useState({ code: 'GENERAL', displayName: '', price: '', capacity: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -33,9 +33,14 @@ export default function EventDetailPage() {
     setSaving(true)
     setError('')
     try {
-      await addTicketType(token, id, { ...form, price: Number(form.price), quota: Number(form.quota) })
+      await addTicketType(token, id, {
+        code: form.code,
+        displayName: form.displayName,
+        priceCents: Math.round(Number(form.price) * 100),
+        capacity: Number(form.capacity),
+      })
       setShowTypeForm(false)
-      setForm({ name: '', description: '', price: '', quota: '' })
+      setForm({ code: 'GENERAL', displayName: '', price: '', capacity: '' })
       loadAll()
     } catch (err) {
       setError(err.response?.data?.error || 'Error al guardar')
@@ -54,7 +59,7 @@ export default function EventDetailPage() {
       <div className="page-header">
         <div>
           <h1>{event.name}</h1>
-          <p className="muted">{event.venue} · {new Date(event.eventDate).toLocaleDateString('es-MX')}</p>
+          <p className="muted">{event.venueName} · {formatDate(event.startsAt)}</p>
         </div>
         <div className="status-actions">
           <span className={`badge badge-${event.status.toLowerCase()}`}>{event.status}</span>
@@ -62,7 +67,7 @@ export default function EventDetailPage() {
             <button className="btn" onClick={() => changeStatus('PUBLISHED')}>Publicar</button>
           )}
           {event.status === 'PUBLISHED' && (
-            <button className="btn-ghost" onClick={() => changeStatus('FINISHED')}>Finalizar</button>
+            <button className="btn-ghost" onClick={() => changeStatus('COMPLETED')}>Finalizar</button>
           )}
         </div>
       </div>
@@ -90,10 +95,10 @@ export default function EventDetailPage() {
         <tbody>
           {ticketTypes.map(t => (
             <tr key={t.id}>
-              <td>{t.name}</td>
-              <td>${Number(t.price).toLocaleString('es-MX')} MXN</td>
-              <td>{t.available + (t.quota - t.available)}</td>
-              <td>{t.quota - t.available}</td>
+              <td>{t.displayName}</td>
+              <td>{formatMoney(t.priceCents, t.currency)}</td>
+              <td>{t.capacity}</td>
+              <td>{t.soldQuantity}</td>
               <td>{t.available}</td>
             </tr>
           ))}
@@ -106,14 +111,19 @@ export default function EventDetailPage() {
             <h2>Nuevo tipo de boleto</h2>
             <form onSubmit={handleAddType}>
               <div className="field">
-                <label>Nombre *</label>
-                <input required value={form.name}
-                       onChange={e => setForm(f => ({ ...f, name: e.target.value }))}/>
+                <label>Código *</label>
+                <select required value={form.code}
+                        onChange={e => setForm(f => ({ ...f, code: e.target.value }))}>
+                  <option value="GENERAL">General</option>
+                  <option value="EARLY">Early Bird</option>
+                  <option value="BACKSTAGE">Backstage</option>
+                  <option value="CORTESIA">Cortesía</option>
+                </select>
               </div>
               <div className="field">
-                <label>Descripción</label>
-                <input value={form.description}
-                       onChange={e => setForm(f => ({ ...f, description: e.target.value }))}/>
+                <label>Nombre *</label>
+                <input required value={form.displayName}
+                       onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}/>
               </div>
               <div className="field">
                 <label>Precio (MXN) *</label>
@@ -122,8 +132,8 @@ export default function EventDetailPage() {
               </div>
               <div className="field">
                 <label>Cupo total *</label>
-                <input type="number" min="1" required value={form.quota}
-                       onChange={e => setForm(f => ({ ...f, quota: e.target.value }))}/>
+                <input type="number" min="1" required value={form.capacity}
+                       onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))}/>
               </div>
               {error && <p className="error">{error}</p>}
               <div className="btn-row">
@@ -147,4 +157,19 @@ function Stat({ label, value }) {
       <span className="stat-label">{label}</span>
     </div>
   )
+}
+
+function formatDate(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('es-MX', {
+    day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  })
+}
+
+function formatMoney(cents, currency = 'MXN') {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency,
+  }).format((cents || 0) / 100)
 }
