@@ -18,12 +18,12 @@ export default function LoginPage() {
     try {
       const r = await apiLogin(email, password)
       const { token, role, displayName } = r.data
-      if (role !== 'ADMIN') {
-        setError('Solo administradores pueden acceder a este panel')
+      if (!['ADMIN', 'STAFF_SCANNER'].includes(role)) {
+        setError('Tu usuario no tiene acceso a este panel')
         return
       }
       login(token, { email, role, displayName })
-      navigate('/', { replace: true })
+      navigate(role === 'STAFF_SCANNER' ? '/scan' : '/', { replace: true })
     } catch {
       setError('Credenciales inválidas')
     } finally {
