@@ -8,7 +8,6 @@ export default function ScannerPage() {
   const { token } = useAuth()
   const [events, setEvents] = useState([])
   const [selectedEventId, setSelectedEventId] = useState('')
-  const [presentedName, setPresentedName] = useState('')
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState('')
   const [fileScanning, setFileScanning] = useState(false)
@@ -24,8 +23,8 @@ export default function ScannerPage() {
   const validateDecodedTicket = useCallback(async (decodedText) => {
     setScanError('')
 
-    if (!presentedName.trim()) {
-      setResult({ accepted: false, result: 'ERROR', message: 'Captura el nombre presentado antes de validar' })
+    if (!selectedEventId) {
+      setResult({ accepted: false, result: 'ERROR', message: 'Selecciona un evento antes de validar' })
       return
     }
 
@@ -33,7 +32,6 @@ export default function ScannerPage() {
       const res = await validateTicket(token, {
         token: decodedText,
         eventId: selectedEventId,
-        presentedName: presentedName.trim(),
       })
       setResult(res.data)
     } catch (err) {
@@ -43,7 +41,7 @@ export default function ScannerPage() {
         message: err.response?.data?.message || err.response?.data?.error || 'Error de red al validar',
       })
     }
-  }, [presentedName, selectedEventId, token])
+  }, [selectedEventId, token])
 
   useEffect(() => {
     if (!scanning || !selectedEventId) return
@@ -131,17 +129,10 @@ export default function ScannerPage() {
               <option key={ev.id} value={ev.id}>{ev.name}</option>
             ))}
           </select>
-          <label className="form-label" style={{ marginTop: '1rem' }}>Nombre presentado</label>
-          <input
-            className="form-input"
-            value={presentedName}
-            onChange={e => setPresentedName(e.target.value)}
-            placeholder="Como aparece en el boleto"
-          />
           <button
             className="btn-primary"
             style={{ marginTop: '1rem', width: '100%' }}
-            disabled={!selectedEventId || !presentedName.trim()}
+            disabled={!selectedEventId}
             onClick={() => setScanning(true)}
           >
             Iniciar escáner

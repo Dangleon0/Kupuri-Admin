@@ -97,9 +97,9 @@ export default function EventDetailPage() {
             <tr key={t.id}>
               <td>{t.displayName}</td>
               <td>{formatMoney(t.priceCents, t.currency)}</td>
-              <td>{t.capacity}</td>
-              <td>{t.soldQuantity}</td>
-              <td>{t.available}</td>
+              <td>{formatNumber(t.capacity)}</td>
+              <td>{formatNumber(t.soldQuantity)}</td>
+              <td>{formatNumber(t.availableQuantity)}</td>
             </tr>
           ))}
         </tbody>
@@ -172,4 +172,8 @@ function formatMoney(cents, currency = 'MXN') {
     style: 'currency',
     currency,
   }).format((cents || 0) / 100)
+}
+
+function formatNumber(value) {
+  return Number.isFinite(Number(value)) ? Number(value) : '—'
 }

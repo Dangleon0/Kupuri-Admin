@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
@@ -11,8 +11,15 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import './index.css'
 
 function ProtectedRoute({ children, roles }) {
-  const { token, user } = useAuth()
+  const { token, user, logout } = useAuth()
+  const expired = Boolean(user?.expiresAt && Date.now() >= user.expiresAt)
+
+  useEffect(() => {
+    if (expired) logout()
+  }, [expired, logout])
+
   if (!token) return <Navigate to="/login" replace />
+  if (expired) return <Navigate to="/login" replace />
   if (roles && !roles.includes(user?.role)) {
     return <Navigate to={user?.role === 'STAFF_SCANNER' ? '/scan' : '/login'} replace />
   }

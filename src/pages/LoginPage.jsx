@@ -17,15 +17,26 @@ export default function LoginPage() {
     setError('')
     try {
       const r = await apiLogin(email, password)
-      const { token, role, displayName } = r.data
+      const { token, accessToken, expiresInSeconds, role, displayName } = r.data
+      const authToken = token || accessToken
       if (!['ADMIN', 'STAFF_SCANNER'].includes(role)) {
         setError('Tu usuario no tiene acceso a este panel')
         return
       }
-      login(token, { email, role, displayName })
+      if (!authToken) {
+        setError('La respuesta de login no incluyó token de acceso')
+        return
+      }
+      const ttlSeconds = Number(expiresInSeconds) || 3600
+      login(authToken, {
+        email,
+        role,
+        displayName,
+        expiresAt: Date.now() + ttlSeconds * 1000,
+      })
       navigate(role === 'STAFF_SCANNER' ? '/scan' : '/', { replace: true })
-    } catch {
-      setError('Credenciales inválidas')
+    } catch (err) {
+      setError(err.response?.status === 401 ? 'Credenciales inválidas' : 'No se pudo iniciar sesión')
     } finally {
       setLoading(false)
     }
