@@ -12,9 +12,20 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
 
   const load = () => {
-    getEvents(token).then(r => setEvents(r.data)).finally(() => setLoading(false))
+    setLoadError('')
+    getEvents(token)
+      .then(r => setEvents(r.data))
+      .catch(err => {
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          setLoadError('Sesión expirada. Cierra sesión y vuelve a entrar.')
+        } else {
+          setLoadError('Error al cargar eventos.')
+        }
+      })
+      .finally(() => setLoading(false))
   }
 
   useEffect(() => { load() }, [])
@@ -50,6 +61,7 @@ export default function EventsPage() {
       </div>
 
       {loading && <p className="muted">Cargando…</p>}
+      {loadError && <p className="error">{loadError}</p>}
 
       <table className="table">
         <thead>
