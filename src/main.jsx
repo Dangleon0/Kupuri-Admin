@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
@@ -10,9 +10,20 @@ import ScannerPage from './pages/ScannerPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import './index.css'
 
-function ProtectedRoute({ children }) {
-  const { token } = useAuth()
-  return token ? children : <Navigate to="/login" replace />
+function ProtectedRoute({ children, roles }) {
+  const { token, user, logout } = useAuth()
+  const expired = Boolean(user?.expiresAt && Date.now() >= user.expiresAt)
+
+  useEffect(() => {
+    if (expired) logout()
+  }, [expired, logout])
+
+  if (!token) return <Navigate to="/login" replace />
+  if (expired) return <Navigate to="/login" replace />
+  if (roles && !roles.includes(user?.role)) {
+    return <Navigate to={user?.role === 'STAFF_SCANNER' ? '/scan' : '/login'} replace />
+  }
+  return children
 }
 
 createRoot(document.getElementById('root')).render(
@@ -21,11 +32,11 @@ createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
-          <Route path="/events/:id" element={<ProtectedRoute><EventDetailPage /></ProtectedRoute>} />
-          <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-          <Route path="/complimentary" element={<ProtectedRoute><ComplimentaryPage /></ProtectedRoute>} />
-          <Route path="/scan" element={<ProtectedRoute><ScannerPage /></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute roles={['ADMIN']}><EventsPage /></ProtectedRoute>} />
+          <Route path="/events/:id" element={<ProtectedRoute roles={['ADMIN']}><EventDetailPage /></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute roles={['ADMIN']}><OrdersPage /></ProtectedRoute>} />
+          <Route path="/complimentary" element={<ProtectedRoute roles={['ADMIN']}><ComplimentaryPage /></ProtectedRoute>} />
+          <Route path="/scan" element={<ProtectedRoute roles={['ADMIN', 'STAFF_SCANNER']}><ScannerPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

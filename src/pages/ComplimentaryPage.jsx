@@ -54,7 +54,8 @@ export default function ComplimentaryPage() {
         note: form.reason,
         items: [{ ticketTypeId: form.ticketTypeId, quantity: Number(form.quantity) }],
       })
-      setSuccess(`${issued.data.length} cortesía(s) emitida(s) y enviada(s) por email`)
+      const count = issued.data?.tickets?.length ?? 0
+      setSuccess(`${count} cortesía(s) emitida(s) y enviada(s) por email`)
       setForm(f => ({ ...f, holderName: '', holderEmail: '', reason: '', quantity: 1 }))
     } catch (err) {
       setError(err.response?.data?.error || 'Error al emitir cortesía')
@@ -81,7 +82,7 @@ export default function ComplimentaryPage() {
                     onChange={e => setForm(f => ({ ...f, ticketTypeId: e.target.value }))}>
               {ticketTypes.length === 0 && <option value="">Este evento no tiene tipos de boleto</option>}
               {ticketTypes.map(t => (
-                <option key={t.id} value={t.id}>{t.displayName} ({t.available} disponibles)</option>
+                <option key={t.id} value={t.id}>{t.displayName} ({formatAvailable(t.availableQuantity)} disponibles)</option>
               ))}
             </select>
           </div>
@@ -117,4 +118,8 @@ export default function ComplimentaryPage() {
       </div>
     </Layout>
   )
+}
+
+function formatAvailable(value) {
+  return Number.isFinite(Number(value)) ? Number(value) : '—'
 }
