@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../context/AuthContext'
 import { getOrders } from '../api'
 import Layout from '../components/Layout'
 
 export default function OrdersPage() {
-  const { token } = useAuth()
   const [orders, setOrders] = useState([])
   const [filter, setFilter] = useState('PAID')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setLoading(true)
-    getOrders(token, filter)
+    getOrders(filter)
       .then(r => setOrders(r.data))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false))

@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { getEvents, getTicketTypes, addTicketType, updateEventStatus, getReport } from '../api'
 import Layout from '../components/Layout'
 
 export default function EventDetailPage() {
   const { id } = useParams()
-  const { token } = useAuth()
   const [event, setEvent] = useState(null)
   const [ticketTypes, setTicketTypes] = useState([])
   const [report, setReport] = useState(null)
@@ -17,9 +15,9 @@ export default function EventDetailPage() {
 
   const loadAll = async () => {
     const [eventsR, ttR, reportR] = await Promise.all([
-      getEvents(token),
+      getEvents(),
       getTicketTypes(id),
-      getReport(token, id),
+      getReport(id),
     ])
     setEvent(eventsR.data.find(e => e.id === id))
     setTicketTypes(ttR.data)
@@ -33,7 +31,7 @@ export default function EventDetailPage() {
     setSaving(true)
     setError('')
     try {
-      await addTicketType(token, id, {
+      await addTicketType(id, {
         code: form.code,
         displayName: form.displayName,
         priceCents: Math.round(Number(form.price) * 100),
@@ -48,7 +46,7 @@ export default function EventDetailPage() {
   }
 
   const changeStatus = async (status) => {
-    await updateEventStatus(token, id, status)
+    await updateEventStatus(id, status)
     loadAll()
   }
 

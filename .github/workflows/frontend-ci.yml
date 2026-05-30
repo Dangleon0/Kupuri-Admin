@@ -1,0 +1,62 @@
+name: frontend-ci
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build, lint and audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies (locked)
+        run: npm ci --ignore-scripts
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Test (unit)
+        run: npm run test
+
+      - name: Build (production)
+        run: npm run build
+
+      - name: Audit (fail on high/critical)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Upload build artifact on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-on-failure
+          path: dist/
+          retention-days: 3
+          if-no-files-found: ignore

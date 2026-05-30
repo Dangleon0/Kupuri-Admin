@@ -1,42 +1,19 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { clearSession, getToken, getUser, setSession, subscribe } from '../lib/authStore'
 
 const AuthContext = createContext(null)
-const TOKEN_KEY = 'admin_token'
-const USER_KEY = 'admin_user'
-
-function readStoredSession() {
-  const storedToken = localStorage.getItem(TOKEN_KEY)
-  const storedUser = localStorage.getItem(USER_KEY)
-  if (!storedToken || !storedUser) return { token: null, user: null }
-
-  try {
-    const parsedUser = JSON.parse(storedUser)
-    if (parsedUser.expiresAt && Date.now() >= parsedUser.expiresAt) {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
-      return { token: null, user: null }
-    }
-    return { token: storedToken, user: parsedUser }
-  } catch {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-    return { token: null, user: null }
-  }
-}
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(readStoredSession)
+  const [session, setSessionState] = useState(() => ({ token: getToken(), user: getUser() }))
+
+  useEffect(() => subscribe((next) => setSessionState({ ...next })), [])
 
   const login = useCallback((tokenValue, userInfo) => {
-    localStorage.setItem(TOKEN_KEY, tokenValue)
-    localStorage.setItem(USER_KEY, JSON.stringify(userInfo))
-    setSession({ token: tokenValue, user: userInfo })
+    setSession(tokenValue, userInfo)
   }, [])
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-    setSession({ token: null, user: null })
+    clearSession()
   }, [])
 
   useEffect(() => {
@@ -59,4 +36,5 @@ export function AuthProvider({ children }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext)

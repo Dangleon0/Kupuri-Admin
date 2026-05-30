@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode'
-import { useAuth } from '../context/AuthContext'
 import { getEvents, validateTicket } from '../api'
 import Layout from '../components/Layout'
 
+// Reject decoded text that obviously can't be a ticket access token: we expect
+// short base64url-safe strings issued by the backend, not URLs / multi-line
+// payloads / huge blobs that could blow up the next request.
+const TICKET_TOKEN_PATTERN = /^[A-Za-z0-9_-]{16,256}$/
+
 export default function ScannerPage() {
-  const { token } = useAuth()
   const [events, setEvents] = useState([])
   const [selectedEventId, setSelectedEventId] = useState('')
   const [scanning, setScanning] = useState(false)
@@ -17,8 +20,8 @@ export default function ScannerPage() {
   const containerRef = useRef(null)
 
   useEffect(() => {
-    getEvents(token).then(r => setEvents(r.data)).catch(() => {})
-  }, [token])
+    getEvents().then(r => setEvents(r.data)).catch(() => {})
+  }, [])
 
   const validateDecodedTicket = useCallback(async (decodedText) => {
     setScanError('')
@@ -28,9 +31,15 @@ export default function ScannerPage() {
       return
     }
 
+    const trimmed = String(decodedText ?? '').trim()
+    if (!TICKET_TOKEN_PATTERN.test(trimmed)) {
+      setResult({ accepted: false, result: 'ERROR', message: 'El código escaneado no tiene formato de boleto válido' })
+      return
+    }
+
     try {
-      const res = await validateTicket(token, {
-        token: decodedText,
+      const res = await validateTicket({
+        token: trimmed,
         eventId: selectedEventId,
       })
       setResult(res.data)
@@ -41,7 +50,7 @@ export default function ScannerPage() {
         message: err.response?.data?.message || err.response?.data?.error || 'Error de red al validar',
       })
     }
-  }, [selectedEventId, token])
+  }, [selectedEventId])
 
   useEffect(() => {
     if (!scanning || !selectedEventId) return

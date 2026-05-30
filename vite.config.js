@@ -18,5 +18,9 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    build: {
+      sourcemap: false,
+      target: 'es2022',
+    },
   }
 })

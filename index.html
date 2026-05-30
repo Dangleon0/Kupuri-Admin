@@ -4,7 +4,34 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend-admin</title>
+    <!--
+      Baseline CSP for defense-in-depth. The CDN (Cloudflare) MUST also send
+      these as response headers so they apply to all requests (meta only kicks
+      in once the HTML parses). Directives that meta does NOT support and must
+      live in headers: frame-ancestors, report-uri, report-to.
+
+      `connect-src` is intentionally permissive for HTTPS so the prod API
+      origin is allowed regardless of subdomain; tighten this in the CDN
+      response header once the prod API hostname is final.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob: https:;
+        font-src 'self' data:;
+        connect-src 'self' http://localhost:8080 https:;
+        media-src 'self' blob:;
+        worker-src 'self' blob:;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+      "
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>Kupuri Admin</title>
   </head>
   <body>
     <div id="root"></div>

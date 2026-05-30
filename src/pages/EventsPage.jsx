@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { getEvents, createEvent } from '../api'
 import Layout from '../components/Layout'
 
 export default function EventsPage() {
-  const { token } = useAuth()
   const [events, setEvents] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', description: '', venueName: '', startsAt: '', coverUrl: '' })
@@ -16,7 +14,7 @@ export default function EventsPage() {
 
   const load = () => {
     setLoadError('')
-    getEvents(token)
+    getEvents()
       .then(r => setEvents(r.data))
       .catch(err => {
         if (err.response?.status === 401 || err.response?.status === 403) {
@@ -35,7 +33,7 @@ export default function EventsPage() {
     setSaving(true)
     setError('')
     try {
-      await createEvent(token, {
+      await createEvent({
         slug: slugify(form.name),
         name: form.name,
         description: form.description,

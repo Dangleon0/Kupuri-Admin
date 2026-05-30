@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../context/AuthContext'
 import { getEvents, getTicketTypes, issueComplimentary } from '../api'
 import Layout from '../components/Layout'
 
 export default function ComplimentaryPage() {
-  const { token } = useAuth()
   const [events, setEvents] = useState([])
   const [ticketTypes, setTicketTypes] = useState([])
   const [form, setForm] = useState({
@@ -16,7 +14,7 @@ export default function ComplimentaryPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    getEvents(token).then(async r => {
+    getEvents().then(async r => {
       const published = r.data.filter(e => e.status === 'PUBLISHED')
       setEvents(published)
 
@@ -48,7 +46,7 @@ export default function ComplimentaryPage() {
     setError('')
     setSuccess('')
     try {
-      const issued = await issueComplimentary(token, {
+      const issued = await issueComplimentary({
         buyerName: form.holderName,
         buyerEmail: form.holderEmail,
         note: form.reason,

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
@@ -7,24 +7,9 @@ import EventDetailPage from './pages/EventDetailPage'
 import ComplimentaryPage from './pages/ComplimentaryPage'
 import OrdersPage from './pages/OrdersPage'
 import ScannerPage from './pages/ScannerPage'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import { AuthProvider } from './context/AuthContext'
 import './index.css'
-
-function ProtectedRoute({ children, roles }) {
-  const { token, user, logout } = useAuth()
-  const expired = Boolean(user?.expiresAt && Date.now() >= user.expiresAt)
-
-  useEffect(() => {
-    if (expired) logout()
-  }, [expired, logout])
-
-  if (!token) return <Navigate to="/login" replace />
-  if (expired) return <Navigate to="/login" replace />
-  if (roles && !roles.includes(user?.role)) {
-    return <Navigate to={user?.role === 'STAFF_SCANNER' ? '/scan' : '/login'} replace />
-  }
-  return children
-}
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
